@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>刹那 - 治愈系双人版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8f6f2;
+            --p-peach: #ffedea;
+            --p-mint: #e8f5f1;
+            --p-blue: #eef2ff;
+        }
+        body {
+            background: var(--bg);
+            color: #444;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .organic-card {
+            background: white;
+            border-radius: 30px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+        }
+        .organic-card:active { transform: scale(0.97); }
+        
+        /* 页面切换逻辑 */
+        .page { display: none; height: 100vh; overflow-y: auto; padding-bottom: 120px; }
+        .page.active { display: block; animation: pageIn 0.5s ease-out; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 底部导航高亮 */
+        .nav-item { opacity: 0.3; transition: 0.3s; }
+        .nav-item.active { opacity: 1; transform: translateY(-5px); }
+
+        /* 模拟手绘时钟样式 */
+        .sketch-clock {
+            width: 160px; height: 160px;
+            border: 2.5px solid #333;
+            border-radius: 48% 52% 50% 50% / 50% 48% 52% 50%;
+        }
+
+        /* 隐藏滚动条 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="ceremony" class="fixed inset-0 z-[100] bg-white/95 backdrop-blur-xl flex flex-col items-center justify-center p-10 text-center hidden">
+        <div id="c-shape" class="w-48 h-48 rounded-full flex items-center justify-center mb-8 text-6xl">✨</div>
+        <h2 id="c-title" class="text-3xl font-bold mb-4"></h2>
+        <p id="c-desc" class="text-gray-500 italic mb-10 leading-relaxed"></p>
+        <div class="flex gap-4">
+            <button onclick="closeCeremony()" class="px-10 py-4 bg-black text-white rounded-full shadow-lg">封存这一刻</button>
+        </div>
+    </div>
+
+    <div id="page-home" class="page active px-8 pt-12">
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-3xl font-bold">刹那。</h1>
+                <p class="text-xs text-gray-400 mt-1">此刻，即是永恒</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-xl">🕯️</div>
+        </div>
+
+        <div class="organic-card p-8 flex flex-col items-center mb-6">
+            <div class="sketch-clock flex items-center justify-center relative mb-8">
+                <div id="needle-h" class="absolute w-1 h-10 bg-black rounded-full origin-bottom" style="transform: rotate(45deg) translateY(-20px)"></div>
+                <div id="needle-m" class="absolute w-1 h-14 bg-black rounded-full origin-bottom" style="transform: rotate(160deg) translateY(-28px)"></div>
+                <div id="needle-s" class="absolute w-[1px] h-12 bg-red-500 origin-bottom" style="transform: rotate(280deg) translateY(-24px)"></div>
+                <div class="w-3 h-3 bg-black rounded-full z-10"></div>
+            </div>
+            <div class="text-xs text-gray-400 mb-2 tracking-widest uppercase">你已路过人间</div>
+            <div class="text-3xl font-bold text-gray-800" id="timer">30.64557964</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="organic-card p-6" style="background: var(--p-peach)">
+                <span class="text-2xl">🍦</span>
+                <div class="mt-4 text-xs text-gray-600">还可以过 <span class="font-bold">54</span> 个夏天</div>
+            </div>
+            <div class="organic-card p-6" style="background: var(--p-mint)">
+                <span class="text-2xl">🌍</span>
+                <div class="mt-4 text-xs text-gray-600">还能看 <span class="font-bold">13</span> 届世界杯</div>
+            </div>
+        </div>
+        
+        <button onclick="changeClockMode()" class="w-full py-4 text-xs text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl italic">
+            “点击切换余生计算模式”
+        </button>
+    </div>
+
+    <div id="page-list" class="page px-6 pt-12">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold">清单大全</h2>
+            <div class="flex bg-white rounded-full p-1 shadow-sm">
+                <button id="mode-single" onclick="toggleMode('single')" class="px-4 py-1 rounded-full text-xs bg-black text-white transition-all">个人</button>
+                <button id="mode-double" onclick="toggleMode('double')" class="px-4 py-1 rounded-full text-xs transition-all">双人</button>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mb-8 overflow-x-auto no-scrollbar">
+            <button class="px-5 py-2 bg-white rounded-full text-xs shadow-sm font-bold border-b-2 border-orange-400">全部</button>
+            <button class="px-5 py-2 bg-white rounded-full text-xs shadow-sm">小红书热门</button>
+            <button class="px-5 py-2 bg-white rounded-full text-xs shadow-sm">美食地图</button>
+            <button class="px-5 py-2 bg-white rounded-full text-xs shadow-sm">胆小鬼挑战</button>
+        </div>
+
+        <div id="list-container" class="space-y-4">
+            </div>
+    </div>
+
+    <div id="page-me" class="page px-8 pt-16">
+        <div class="flex flex-col items-center mb-10">
+            <div class="w-24 h-24 rounded-[40px] bg-yellow-300 flex items-center justify-center text-5xl shadow-xl mb-4">😊</div>
+            <h2 class="text-xl font-bold">人生已点亮</h2>
+            <div class="flex gap-2 mt-2">
+                <span class="text-xs bg-white px-3 py-1 rounded-full shadow-sm">单人 <b id="stat-s">0</b></span>
+                <span class="text-xs bg-white px-3 py-1 rounded-full shadow-sm">双人 <b id="stat-d">0</b></span>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div onclick="alert('设置出生日期：1995-05-20')" class="organic-card p-5 flex justify-between items-center">
+                <div class="flex items-center gap-3">🎂 <span class="text-sm">设置出生日期</span></div>
+                <span class="text-gray-300">❯</span>
+            </div>
+            <div class="organic-card p-5 flex justify-between items-center">
+                <div class="flex items-center gap-3">📳 <span class="text-sm">触感反馈</span></div>
+                <div class="w-10 h-5 bg-green-400 rounded-full relative"><div class="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
+            </div>
+            <div onclick="alert('正在生成生命之书...')" class="organic-card p-5 flex justify-between items-center" style="background: var(--p-blue)">
+                <div class="flex items-center gap-3">📖 <span class="text-sm">导出我的生命之书</span></div>
+                <span class="text-gray-300">❯</span>
+            </div>
+        </div>
+        
+        <p class="text-center text-[10px] text-gray-300 mt-12 italic">刹那 App · 记录每个值得活着的瞬间</p>
+    </div>
+
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[320px] h-20 bg-white/90 backdrop-blur-md rounded-[40px] shadow-2xl flex justify-around items-center px-6 z-[90]">
+        <button onclick="showPage('home')" id="nav-home" class="nav-item active flex flex-col items-center">
+            <span class="text-2xl">🏠</span><span class="text-[10px] mt-1">当下</span>
+        </button>
+        <button onclick="showPage('list')" id="nav-list" class="nav-item flex flex-col items-center">
+            <span class="text-2xl">📖</span><span class="text-[10px] mt-1">清单</span>
+        </button>
+        <button onclick="showPage('me')" id="nav-me" class="nav-item flex flex-col items-center">
+            <span class="text-2xl">👤</span><span class="text-[10px] mt-1">我的</span>
+        </button>
+    </nav>
+
+    <script>
+        // [数据：包含小红书热门清单与双人模式]
+        const lifeData = [
+            { id: 1, title: "凌晨的路边摊", desc: "在烟火气里和世界干杯", icon: "🍢", type: "single", done: false },
+            { id: 2, title: "给十年后写封信", desc: "把现在的勇气寄给未来的自己", icon: "✉️", type: "single", done: false },
+            { id: 3, title: "去大理看苍山洱海", desc: "逃离城市，只为那一抹蓝", icon: "🌊", type: "single", done: false },
+            { id: 4, title: "一起换情侣头像", desc: "在数字世界也要宣告主权", icon: "👩‍❤️‍👨", type: "double", done: false },
+            { id: 5, title: "共同种一盆花", desc: "见证生命在彼此照顾下生长", icon: "🪴", type: "double", done: false },
+            { id: 6, title: "挑战一次蹦极", desc: "感受地心引力带来的瞬间清醒", icon: "🪂", type: "single", done: false },
+            { id: 7, title: "完成一场雨中漫步", desc: "洗掉成年人的所有顾虑", icon: "🌧️", type: "double", done: false }
+        ];
+
+        let currentMode = 'single';
+        let age = 30.64557964;
+        let stats = { single: 0, double: 0 };
+
+        // [逻辑：时间流逝]
+        setInterval(() => {
+            age += 0.00000001;
+            document.getElementById('timer').innerText = age.toFixed(8);
+            // 指针微动
+            document.getElementById('needle-s').style.transform = `rotate(${280 + (age*100)%360}deg) translateY(-24px)`;
+        }, 100);
+
+        // [逻辑：全闭环页面切换]
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('nav-' + pageId).classList.add('active');
+            
+            if(window.navigator.vibrate) window.navigator.vibrate(10);
+            if(pageId === 'list') renderList();
+        }
+
+        // [逻辑：双人/单人模式切换]
+        function toggleMode(mode) {
+            currentMode = mode;
+            document.getElementById('mode-single').className = mode === 'single' ? 'px-4 py-1 rounded-full text-xs bg-black text-white' : 'px-4 py-1 rounded-full text-xs';
+            document.getElementById('mode-double').className = mode === 'double' ? 'px-4 py-1 rounded-full text-xs bg-black text-white' : 'px-4 py-1 rounded-full text-xs';
+            renderList();
+        }
+
+        // [逻辑：清单渲染]
+        function renderList() {
+            const container = document.getElementById('list-container');
+            container.innerHTML = '';
+            lifeData.filter(i => i.type === currentMode).forEach(item => {
+                const card = document.createElement('div');
+                card.className = `organic-card p-5 flex items-center justify-between ${item.done ? 'opacity-40 grayscale' : ''}`;
+                card.onclick = () => ignite(item.id);
+                card.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="text-2xl w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50">${item.icon}</div>
+                        <div>
+                            <div class="font-bold text-sm">${item.title}</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">${item.desc}</div>
+                        </div>
+                    </div>
+                    <div class="text-xl">${item.done ? '✨' : '○'}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // [逻辑：点亮仪式仪式闭环]
+        function ignite(id) {
+            const item = lifeData.find(i => i.id === id);
+            if(item.done) return;
+
+            const ceremony = document.getElementById('ceremony');
+            document.getElementById('c-shape').innerText = item.icon;
+            document.getElementById('c-shape').style.background = currentMode === 'single' ? 'var(--p-peach)' : 'var(--p-blue)';
+            document.getElementById('c-title').innerText = item.title;
+            document.getElementById('c-desc').innerText = item.desc;
+            
+            ceremony.classList.remove('hidden');
+            if(window.navigator.vibrate) window.navigator.vibrate([30, 100, 30]);
+
+            item.done = true;
+            stats[item.type]++;
+            document.getElementById('stat-s').innerText = stats.single;
+            document.getElementById('stat-d').innerText = stats.double;
+        }
+
+        function closeCeremony() {
+            document.getElementById('ceremony').classList.add('hidden');
+            renderList();
+        }
+
+        function changeClockMode() {
+            alert("已为您切换至“心跳维度”计算模式");
+        }
+
+        // 初始渲染
+        renderList();
+    </script>
+</body>
+</html>
